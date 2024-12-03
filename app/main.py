@@ -39,10 +39,5 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-async def get_root(
-    token: str = Depends(oauth2_scheme),
-    categori :Optional[str] = Query(enum=["wilson","david","koala"])
-): 
-    return categori
+
 

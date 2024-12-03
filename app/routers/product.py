@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, File, Form, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, File, Form, UploadFile, status,Query
+from typing import Optional
 from sqlalchemy.orm import Session
 from app.config.database import SessionLocal
 from app.models.models import Product
-from app.schemas.products import ProductResponse,ProductUpdate,ProductCreate
+from app.schemas.products import ProductResponse,ProductUpdate,ProductCreate,Search
 from app.cloudinary.function_cloudinary import upload_img
 from app.crud.product import *
 
@@ -14,6 +15,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 
 @router.post("/")
@@ -67,27 +69,6 @@ def search_product_by_category( db: Session = Depends(get_db) ,category_id: int 
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
-
-@router.get("/buscar")
-def buscar_prod(name:str, skip:int=0,limit:int=0 ,db: Session = Depends(get_db)):
-    products = db.query(Product).filter(Product.name.ilike(f"%{name}%")).offset(skip).limit(limit).all()
-    if not products:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return [
-        {
-            "id": product.id,
-            "name": product.name,
-            "description": product.description,
-            "price": product.price,
-            "atributes": product.atributes,
-            "categori": product.category.name if product.category else None,
-            "marca": product.marca.name if product.marca else None,
-            "stock": product.stock,
-            "image_url": product.image_url,
-        }
-        for product in products
-    ]
-
 
 # elimina un producto en la base ded atos
 @router.delete("/{product_id}")
@@ -169,3 +150,25 @@ async def update_product_with_image(
             "image_url": db_product.image_url,
         },
     }
+
+
+@router.get("/productos-buscar/")
+def search_productos(
+    nombre: Optional[str] = Query(None),
+    skip: int = 0,
+    limit: int = 10,
+    category_id:int = None,
+    db: Session = Depends(get_db)
+):
+    query = db.query(Product).filter(Product.categori_id == category_id)
+
+    # Aplicar filtros dinámicamente
+    if nombre:
+        query = query.filter(Product.name.ilike(f"%{nombre}%"))
+
+    productos = query.offset(skip).limit(limit).all()
+
+    if not productos:
+        raise HTTPException(status_code=404, detail="No se encontraron productos")
+
+    return productos

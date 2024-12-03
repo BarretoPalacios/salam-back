@@ -46,7 +46,7 @@ def update_product_with_relations(db: Session, product_id: int, product: Product
     return db_product
 
 def get_products_by_name(db: Session, name: str, skip: int = 0, limit: int = 10):
-    products = db.query(Product).filter(Product.name.ilike(f"%{name}%")).offset(skip).limit(limit).all()
+    products = db.query(Product).offset(skip).limit(limit).all()
     return [
         {
             "id": product.id,
