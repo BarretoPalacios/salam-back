@@ -3,9 +3,11 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from app.config.database import SessionLocal
 from app.models.models import Product
-from app.schemas.products import ProductResponse,ProductUpdate,ProductCreate,Search
+from app.schemas.products import ProductResponse,ProductUpdate,ProductCreate
 from app.cloudinary.function_cloudinary import upload_img
 from app.crud.product import *
+from app.auth.auth import oauth2_scheme
+
 
 router = APIRouter(tags=["Productos endpoints"])
 
@@ -29,6 +31,7 @@ async def create_product_with_image(
     marca_id: int = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
 ):
     response =  upload_img(name,file.file)
 
@@ -72,7 +75,7 @@ def search_product_by_category( db: Session = Depends(get_db) ,category_id: int 
 
 # elimina un producto en la base ded atos
 @router.delete("/{product_id}")
-def delete_product(product_id: int, db: Session = Depends(get_db)):
+def delete_product(product_id: int, db: Session = Depends(get_db),token: str = Depends(oauth2_scheme)):
     db_product = db.query(Product).filter(Product.id == product_id).first()
     if not db_product:
         raise HTTPException(
@@ -103,6 +106,7 @@ async def update_product_with_image(
     marca_id: int = Form(...),
     file: UploadFile = File(None),
     db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
 ):
     # Buscar el producto por ID
     db_product = db.query(Product).filter(Product.id == product_id).first()
@@ -152,7 +156,7 @@ async def update_product_with_image(
     }
 
 
-@router.get("/productos-buscar/")
+@router.get("/products-buscar/")
 def search_productos(
     nombre: Optional[str] = Query(None),
     skip: int = 0,
