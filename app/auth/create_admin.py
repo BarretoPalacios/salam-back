@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.models import User, Base
+from app.models.models import User, Base, Category
 from app.auth.auth import get_password_hash
 from app.config.database import engine, SessionLocal
 from app.environt.setting import settings
@@ -21,6 +21,11 @@ def create_admin():
         hashed_password=hashed_password,
         role=settings.CREATE_ADMIN_ROL 
     )
+
+    perro_category = Category(name="Perro")
+    db.add(perro_category)
+    gato_category = Category(name="Gato")
+    db.add(gato_category)
     # Guardar en la base de datos
     db.add(admin_user)
     db.commit()
